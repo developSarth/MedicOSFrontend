@@ -123,7 +123,8 @@ function FileUpload({ onFileSelect, file, onClear }: FileUploadProps) {
     )
 }
 
-import { AgentResponseDisplay } from "@/components/AgentResponseDisplay"
+import { StreamingOutput } from "@/components/ui/streaming-output"
+import { formatToMarkdown } from "@/lib/formatter"
 
 interface AgentOutputProps {
     output: string | object
@@ -152,6 +153,9 @@ function AgentOutput({ output, isLoading, generatedBy }: AgentOutputProps) {
         )
     }
 
+    // Convert any object/JSON output to a formatted Markdown string for streaming
+    const formattedContent = typeof output === 'string' ? output : formatToMarkdown(output)
+
     return (
         <div className="space-y-4">
             {generatedBy && (
@@ -161,8 +165,16 @@ function AgentOutput({ output, isLoading, generatedBy }: AgentOutputProps) {
                     <span className="font-medium text-primary">{generatedBy}</span>
                 </div>
             )}
-            <div className="bg-muted/10 p-2 md:p-6 rounded-lg border border-border/50 shadow-inner min-h-[300px]">
-                <AgentResponseDisplay data={output} />
+            <div className="bg-muted/10 p-4 md:p-6 rounded-lg border border-border/50 shadow-inner min-h-[300px]">
+                {/* 
+                   We use key={formatContent} to force a re-render/re-stream 
+                   if the content changes completely 
+                */}
+                <StreamingOutput
+                    key={formattedContent.slice(0, 20)}
+                    content={formattedContent}
+                    speed={15}
+                />
             </div>
         </div>
     )
